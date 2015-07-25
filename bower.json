@@ -1,0 +1,19 @@
+{
+  "name": "mp-router",
+  "version": "0.0.0",
+  "authors": [
+    "mpr0xy <mpr0xy@live.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.4",
+    "lodash": "~3.10.0"
+  }
+}
