@@ -4,8 +4,17 @@
 (function(){
   var clickEvent = ('undefined' !== typeof document) && document.ontouchstart ? 'touchstart' : 'click';
 
-  var page = function(path, fn) {
-    page.callback[path] = fn;
+  var page = function(path, option) {
+    page.callback[path] = {}
+    // 如果只有一个函数，就是启动函数
+    if (isFunction(option)) {
+      page.callback[path].start = option;
+    }
+    // 如果是对象，就提取开始函数和结束函数
+    if (isObject(option)) {
+      page.callback[path].start = option.start;
+      page.callback[path].end = option.end;
+    }
   }
 
   $(document).on(clickEvent, onClick);
@@ -13,7 +22,8 @@
   $(window).on("popstate", function(event) {
     console.log("popstate");
     console.log(location.hash);
-    page.render(location.hash.slice(2), event.originalEvent.state);
+    var lastPath = event.originalEvent.state.path;
+    page.render(location.hash.slice(2), page.stateData[lastPath]);
   });
 
   page.callback = {};
@@ -29,13 +39,13 @@
         _num: _num
       }
     }
-    history.pushState(page.stateData[path], "", hash);
+    history.pushState({"path": path}, "", hash);
     page.render(path, "");
   }
 
   page.render = function(path, data) {
-    if (page.callback[path]) {
-      page.callback[path](data);
+    if (page.callback[path] && page.callback[path].start) {
+      page.callback[path].start(data);
     } else if (page.defaultFunc) {
       page.defaultFunc();
     }
@@ -46,7 +56,6 @@
   }
 
   page.reset = function() {
-    var len = history.length;
     if (history.state && (history.state._num !== undefined)) {
       history.go(-(history.state._num + 1));
     }
@@ -87,7 +96,25 @@
     var pathIndex = el.hash.indexOf('#!');
     var path = ~pathIndex ? el.hash.slice(pathIndex + 2) : '';
 
-    page.show(el.hash, path);
+    // 添加路由结束函数
+    var currentHref = window.location.hash;
+    var cPathIndex = currentHref.indexOf('#!');
+    var cPath = ~cPathIndex ? currentHref.slice(cPathIndex + 2) : '';
+    if (page.callback[cPath] && page.callback[cPath].end) {
+      page.callback[cPath].end();
+    }
+
+    page.show(link, path);
   }
+
+  function isFunction(functionToCheck) {
+    var getType = {};
+    return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+  }
+
+  function isObject(object) {
+    return object !== null && (typeof object === 'object')
+  }
+
   window.mpPage = page;
 })();
